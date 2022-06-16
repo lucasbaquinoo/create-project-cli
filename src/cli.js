@@ -5,10 +5,8 @@ import { createProject } from './main'
 function parseArgumentsIntoOptions(rawArgs) {
   const args = arg(
     {
-      '--git': Boolean,
       '--yes': Boolean,
       '--install': Boolean,
-      '-g': '--git',
       '-y': '--yes',
       '-i': '--install',
     },
@@ -18,51 +16,55 @@ function parseArgumentsIntoOptions(rawArgs) {
   );
   return {
     skipPrompts: args['--yes'] || false,
-    git: args['--git'] || false,
-    template: args._[0],
+    packageManager: args._[0],
+    technology: args._[0],
     runInstall: args['--install'] || false,
   };
 }
 
 async function promptForMissingOptions(options) {
-  const defaultTemplate = 'JavaScript';
+  const defaultTechnology = 'React.js';
+  const defaultPackageManager = 'npm';
   if (options.skipPrompts) {
     return {
       ...options,
-      template: options.template || defaultTemplate,
+      technology: options.technology || defaultTechnology,
+      packageManager: options.packageManager || defaultPackageManager,
     };
   }
 
   const questions = [];
-  if (!options.template) {
+
+  if (!options.packageManager) {
     questions.push({
       type: 'list',
-      name: 'template',
-      message: 'Please choose which project template to use',
-      choices: ['JavaScript', 'TypeScript'],
-      default: defaultTemplate,
+      name: 'packageManager',
+      message: 'What package manager would you like to use?',
+      choices: ['npm', 'yarn'],
+      default: defaultPackageManager,
     });
   }
 
-  if (!options.git) {
+  if (!options.technology) {
     questions.push({
-      type: 'confirm',
-      name: 'git',
-      message: 'Initialize a git repository?',
-      default: false,
+      type: 'list',
+      name: 'technology',
+      message: 'Please choose which technology to use',
+      choices: ['React.js', 'Next.js'],
+      default: defaultTechnology,
     });
   }
 
   const answers = await inquirer.prompt(questions);
   return {
     ...options,
-    template: options.template || answers.template,
-    git: options.git || answers.git,
+    technology: options.technology || answers.technology,
+    packageManager: options.packageManager || answers.packageManager,
   };
 }
 
 export async function cli(args) {
   let options = parseArgumentsIntoOptions(args);
   options = await promptForMissingOptions(options);
-  await createProject(options);
+  console.log(options);
 }
